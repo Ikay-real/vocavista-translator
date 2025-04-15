@@ -4,8 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-///update check
-const noteRoutes_1 = __importDefault(require("./routes/noteRoutes"));
+// import noteRoutes from './routes/noteRoutes';
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config();
@@ -16,7 +15,7 @@ app.use(express_1.default.urlencoded({ extended: true })); // Parse URL-encoded 
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 app.use(express_1.default.json());
 //app.use(apiKeyMiddleware);
-app.use('/notes', noteRoutes_1.default);
+// app.use('/notes', noteRoutes);
 app.get('/', (req, res) => {
     res.sendFile(path_1.default.join(__dirname, '../public', 'index.html'));
 });

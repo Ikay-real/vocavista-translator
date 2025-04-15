@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import noteRoutes from './routes/noteRoutes';
+// import noteRoutes from './routes/noteRoutes';
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 //app.use(apiKeyMiddleware);
 
-app.use('/notes', noteRoutes);
+// app.use('/notes', noteRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
