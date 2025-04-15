@@ -1,0 +1,23 @@
+📁 .github
+    📁 workflows
+        📄 ci.yml
+📁 src
+    📁 controllers
+        📄 noteController.ts
+    📁 middleware
+        📄 apiKeyMiddleware.ts
+    📁 models
+        📄 note.ts
+    📁 routes
+        📄 noteRoutes.ts
+    📁 utils
+        📄 db.ts
+    📄 index.ts
+📄 .DS_Store
+📄 .env
+📄 .eslintrc.js
+📄 .gitignore
+📄 package-lock.json
+📄 package.json
+📄 README.md
+📄 tsconfig.json
