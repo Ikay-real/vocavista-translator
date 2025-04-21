@@ -3,13 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+exports.apiKeyMiddleware = void 0;
+const config_1 = __importDefault(require("../utils/config"));
 const apiKeyMiddleware = (req, res, next) => {
-    const apiKey = req.header('x-api-key');
-    if (!apiKey || apiKey !== process.env.API_KEY) {
-        return res.status(403).json({ message: 'Forbidden' });
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey || apiKey !== config_1.default.apiKey) {
+        return res.status(401).json({ message: 'Unauthorized: Invalid or missing API key' });
     }
     next();
 };
-exports.default = apiKeyMiddleware;
+exports.apiKeyMiddleware = apiKeyMiddleware;

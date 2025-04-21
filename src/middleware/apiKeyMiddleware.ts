@@ -1,14 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import dotenv from 'dotenv';
+import config from '../utils/config';
 
-dotenv.config();
+export const apiKeyMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const apiKey = req.headers['x-api-key'] as string;
 
-const apiKeyMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const apiKey = req.header('x-api-key');
-    if (!apiKey || apiKey !== process.env.API_KEY) {
-        return res.status(403).json({ message: 'Forbidden' });
-    }
-    next();
+  if (!apiKey || apiKey !== config.apiKey) {
+    return res.status(401).json({ message: 'Unauthorized: Invalid or missing API key' });
+  }
+
+  next();
 };
-
-export default apiKeyMiddleware;

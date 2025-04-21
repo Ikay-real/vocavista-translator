@@ -21,3 +21,133 @@
 📄 package.json
 📄 README.md
 📄 tsconfig.json
+
+
+PROMPT CONTEXT:
+
+
+
+Okay, here is a comprehensive project context note designed to give an AI assistant (or another developer) a solid understanding of this Node.js Express API project structure, design patterns, and key functionalities without needing to read every line of code.
+
+---
+
+**Project Context Note: Gemini Translator API (Node.js, Express, TypeScript)**
+
+**1. Project Summary & Purpose:**
+
+This project is a simple API built with Node.js and Express, written in TypeScript. Its primary function is to provide a `/translate` endpoint that leverages the Google Gemini Large Language Model (LLM) to translate text between English and Spanish. It also includes a basic `/usage` endpoint for monitoring the activity of this specific API instance. The API is secured using an API key passed in request headers.
+
+**2. Core Technology Stack:**
+
+* **Runtime:** Node.js
+* **Framework:** Express (for routing and middleware)
+* **Language:** TypeScript (for static typing and better maintainability)
+* **LLM Interaction:** `@google/generative-ai` library
+* **Configuration:** `dotenv` (for environment variables)
+* **Development Tools:** `ts-node` (for running TS directly), `typescript` (compiler), `eslint` (linting)
+
+**3. Architecture & Design Patterns:**
+
+The project follows a standard layered API architecture with an emphasis on **Separation of Concerns**:
+
+* **Entry Point (`index.ts`):** Initializes the framework, loads configuration, sets up global middleware (like JSON parsing), and mounts the route handlers.
+* **Configuration (`utils/config.ts`):** Centralized loading and validation of environment variables. Abstracts config access away from core logic.
+* **Middleware (`middleware/*.ts`):** Handles cross-cutting concerns like authentication *before* requests reach the route handlers. `apiKeyMiddleware` is the primary example.
+* **Routing (`routes/*.ts`):** Defines the API endpoints (`/translate`, `/usage`) and maps them to the appropriate controller functions. Simple and focused solely on endpoint declaration.
+* **Controllers (`controllers/*.ts`):** Contain the core logic for handling specific incoming requests. They perform input validation, interact with services/utilities, and format the final HTTP response. They act as the bridge between routes and business logic/services.
+* **Utilities/Services (`utils/*.ts`):** Encapsulate external interactions or specific business logic that can be reused or kept separate from the controller (e.g., `geminiService` for LLM interaction, `usageController` for tracking stats).
+
+This structure is similar to an MVC (Model-View-Controller) pattern, though without a traditional 'View' layer (as it's an API) and without a dedicated 'Model' layer for database interactions (as this version doesn't use a database).
+
+**4. Directory Structure Breakdown:**
+
+* `.github/workflows/`: Contains GitHub Actions workflows (e.g., `ci.yml` for continuous integration like building and linting).
+* `src/`: Contains all source code.
+    * `controllers/`: Holds files responsible for handling incoming requests and preparing responses. `translationController.ts` and `usageController.ts`.
+    * `middleware/`: Contains reusable request middleware. `apiKeyMiddleware.ts` is here.
+    * `routes/`: Defines the API endpoints and links them to controllers. `translationRoutes.ts` and `usageRoutes.ts`.
+    * `utils/`: Houses helper functions, service classes (like the Gemini wrapper), and configuration loading. `config.ts` and `geminiService.ts`.
+    * `index.ts`: The main entry file that sets up the application.
+* `.env.example`: Provides a template for environment variables.
+* `.eslintrc.js`: ESLint configuration for code linting.
+* `.gitignore`: Specifies files/directories to be ignored by Git.
+* `package.json`: Project metadata, scripts, and dependencies.
+* `package-lock.json`: Locks dependency versions.
+* `README.md`: Project documentation, setup, and usage instructions.
+* `tsconfig.json`: TypeScript compiler configuration.
+
+**5. Key Component Responsibilities & Data Flow:**
+
+* An incoming request first hits `index.ts`.
+* Global middleware (`express.json()`) is applied.
+* The request is routed based on its path (`/translate`, `/usage`) to the appropriate router (`translationRoutes.ts` or `usageRoutes.ts`).
+* The router applies endpoint-specific middleware (`apiKeyMiddleware.ts`) for authentication. If the API key is missing or invalid, the request is rejected here (401).
+* If authenticated, the request proceeds to the designated controller function (`translationController.handleTranslateRequest` or `usageController.getUsageStats`).
+* **For `/translate`:**
+    * `translationController` validates the request body.
+    * It calls `geminiService.translateText`, passing the input data.
+    * `geminiService` constructs the full prompt (including the static prompt text and dynamic input).
+    * `geminiService` calls the Google Gemini API (`model.generateContent`) using the `@google/generative-ai` library and configured generation settings.
+    * `geminiService` receives the response from Gemini, parses the expected JSON output, and extracts `usageMetadata` (tokens).
+    * `geminiService` returns the parsed translation result and usage data to the controller.
+    * `translationController` calls `usageController.incrementUsageStats` to update the local counter with request/token counts.
+    * `translationController` sends the parsed translation result back to the client as the HTTP response (200 OK).
+    * Errors during this flow (validation, Gemini API call, parsing) are caught and returned as appropriate HTTP error responses (400, 500).
+* **For `/usage`:**
+    * `usageController.getUsageStats` accesses the in-memory `usageStats` object.
+    * It reads the configured manual limits from `config.ts`.
+    * It calculates percentage usage based on the local count vs. manual limits if configured.
+    * It formats the usage data into a JSON response and sends it back to the client (200 OK).
+* Any uncaught errors might fall through to the basic error handling middleware in `index.ts`.
+
+**6. Configuration Approach:**
+
+* All sensitive information (API keys) and environment-specific settings (port, Gemini model, generation settings, manual limits) are stored in a `.env` file.
+* `dotenv` loads these variables into `process.env`.
+* `src/utils/config.ts` reads from `process.env`, parses values into the correct types (numbers, arrays), provides default values where appropriate, and performs basic validation.
+* Other parts of the application access configuration *only* through the `config` object imported from `config.ts`, centralizing configuration logic.
+
+**7. Specifics on Usage Tracking (`/usage` Endpoint):**
+
+* The `/usage` endpoint reports statistics collected **locally in memory** by this specific running instance of the API server.
+* It tracks the number of successful translation requests and the total input and output tokens reported by the Gemini API for those requests.
+* If `FREE_TIER_MONTHLY_INPUT_TOKENS_LIMIT` and `FREE_TIER_MONTHLY_OUTPUT_TOKENS_LIMIT` are set in the `.env` file, it also calculates and reports a percentage of the *local count* compared to these *manually configured* limits.
+* **CRITICAL LIMITATION:** This endpoint **DOES NOT** query your official Google Cloud account for actual usage, billing status, or real-time quota consumption. Google Cloud usage and quotas must be monitored via the Google Cloud Console or Google AI Studio. The percentage calculation is an *estimation* based on incomplete local data and a user-provided number.
+
+**8. Dependencies (Key Packages):**
+
+* `express`: Web framework.
+* `@google/generative-ai`: Client library for interacting with Gemini API.
+* `dotenv`: Loads environment variables from a `.env` file.
+* `typescript`: The TypeScript compiler.
+* `ts-node`: Executes TypeScript files directly (used for `npm run dev`).
+* `@types/*`: TypeScript definition files for libraries.
+* `eslint`, `@typescript-eslint/*`: Code linting tools.
+
+**9. Potential Scaling and Extension Points:**
+
+* **More Language Pairs:** Modify the prompt in `geminiService.ts` and potentially add more validation in `translationController.ts` if the allowed languages are dynamic.
+* **Different LLM Models/Features:** Update `geminiService.ts` to support different Gemini models or features (e.g., chat, function calling) or even integrate other LLMs by creating abstract interfaces and different service implementations.
+* **State Persistence:** Introduce a database (e.g., PostgreSQL, MongoDB) to:
+    * Store translation history.
+    * Manage API keys dynamically instead of in the `.env`.
+    * Implement more robust, non-volatile usage tracking across server restarts and instances.
+* **Rate Limiting:** Implement per-API-key rate limiting using an Express middleware like `express-rate-limit`, potentially backed by a database or caching layer (Redis).
+* **Caching:** Implement caching for frequently requested translations to reduce LLM calls.
+* **Advanced Logging:** Integrate a structured logging library (e.g., Winston, Pino) for better monitoring and debugging in production.
+* **Centralized Error Handling:** Implement dedicated error handling middleware for more uniform error responses.
+* **Containerization:** Package the application in a Docker container for easier deployment and scaling.
+* **Deployment:** Deploy to platforms like Google Cloud Run, Google Compute Engine, Kubernetes, or other cloud providers.
+* **Official Usage Monitoring:** For truly accurate, account-wide usage and quota management, investigate and integrate with Google Cloud Monitoring API and Billing API (requires significant additional development and Google Cloud configuration).
+
+**10. Code Style Notes:**
+
+* The project uses TypeScript with strict settings (`"strict": true` in `tsconfig.json`).
+* Asynchronous operations (like API calls) are handled using `async/await`.
+* Basic error handling is done with `try...catch` blocks, often propagating errors from services up to the controller.
+* Interfaces are used to define the shape of data (e.g., request bodies, service responses).
+* ESLint is configured for code quality and consistency.
+
+---
+
+This note should provide the necessary context for an AI to understand the project's layout, purpose, and how its different parts interact, facilitating more effective code analysis and modification suggestions.
